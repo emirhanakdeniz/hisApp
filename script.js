@@ -798,10 +798,10 @@ async function analyzeText() {
   result.style.display = "block";
 
   try {
-    const response = await fetch("http://127.0.0.1:5000/analyze", {
+    const response = await fetch("https://his-backend-4k9s.onrender.com/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
+      body: JSON.stringify({ text, username: currentUser || 'anonymous' })
     });
 
     if (!response.ok) throw new Error("Hata oluştu");
