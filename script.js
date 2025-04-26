@@ -3,6 +3,22 @@ let lastEmotion = null;
 let currentUser = null;
 let isFirstAnalysis = false;
 
+// Detect mobile device
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// Debounce utility
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 const emotionColors = {
   Happy: "#FFD700",
   Sadness: "#6495ED",
@@ -33,22 +49,6 @@ const emotionTranslations = {
   Neutral: "Nötr"
 };
 
-// Detect mobile device
-const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-// Debounce utility
-function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-}
-
 window.addEventListener("load", () => {
   const savedUsers = JSON.parse(localStorage.getItem("users")) || {};
   const savedCurrentUser = localStorage.getItem("currentUser");
@@ -62,7 +62,7 @@ window.addEventListener("load", () => {
     updatePlaceholder(currentUser);
     updateGreeting(currentUser);
     updateUserContainer(currentUser);
-    if (!savedUsers[savedCurrentUser].hasSeenOnboarding) {
+    if (!isMobile && !savedUsers[savedCurrentUser].hasSeenOnboarding) {
       startOnboarding(currentUser);
     }
     loadHistory();
@@ -272,9 +272,9 @@ function saveName() {
     currentUser = newUser;
     let users = JSON.parse(localStorage.getItem("users")) || {};
     if (!users[currentUser]) {
-      users[currentUser] = { emotionHistory: [], hasSeenOnboarding: false };
+      users[currentUser] = { emotionHistory: [], hasSeenOnboarding: isMobile ? true : false };
       localStorage.setItem("users", JSON.stringify(users));
-      loadUsers(); // Refresh dropdown to include new user
+      loadUsers();
     }
     localStorage.setItem("currentUser", currentUser);
     updatePlaceholder(currentUser);
@@ -283,9 +283,9 @@ function saveName() {
     
     document.getElementById("text-input").value = "";
     isFirstAnalysis = true;
-    hideHistory();
-    hideHistoryStats();
-    loadHistory();
+    if (!isMobile) {
+      loadHistory();
+    }
     
     gsap.to(".modal-content", {
       duration: 0.2,
@@ -297,11 +297,9 @@ function saveName() {
         nameModal.style.opacity = "0";
         nameModal.style.visibility = "hidden";
         
-        setTimeout(() => {
-          if (!users[currentUser].hasSeenOnboarding) {
-            startOnboarding(currentUser);
-          }
-        }, 100);
+        if (!isMobile && !users[currentUser].hasSeenOnboarding) {
+          startOnboarding(currentUser);
+        }
       }
     });
   } else {
@@ -379,14 +377,14 @@ function getOnboardingSteps(name) {
     {
       title: `${name}'nin Geçmiş Analizleri`,
       text: "📜 butonu ile son 5 analizini gör.",
-      highlight: isMobile ? "#history-toggle-right" : "#history-container",
-      position: isMobile ? "left" : "right"
+      highlight: "#history-container",
+      position: "right"
     },
     {
       title: `${name}, Oranları İncele`,
       text: "📊 butonu ile hislerinin dağılımını keşfet.",
-      highlight: isMobile ? "#history-toggle-left" : "#history-stats-container",
-      position: isMobile ? "right" : "right"
+      highlight: "#history-stats-container",
+      position: "right"
     }
   ];
 }
@@ -430,29 +428,23 @@ function updateOnboardingStep(name) {
     const element = document.querySelector(step.highlight);
     if (element) {
       element.classList.add("highlight");
-      if (!isMobile && (step.highlight === "#history-container" || step.highlight === "#history-stats-container")) {
-        element.classList.add("show");
-      }
+      element.classList.add("show");
       
       const rect = element.getBoundingClientRect();
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-      const modalWidth = Math.min(isMobile ? 240 : 280, windowWidth * 0.9);
+      const modalWidth = Math.min(280, windowWidth * 0.9);
       const modalHeight = modalContent.getBoundingClientRect().height || 180;
       let top, left;
 
       switch (step.position) {
         case "below":
-          top = rect.bottom + (isMobile ? 5 : 10);
+          top = rect.bottom + 10;
           left = rect.left + (rect.width - modalWidth) / 2;
           break;
         case "right":
           top = rect.top + (rect.height - modalHeight) / 2;
-          left = rect.right + (isMobile ? 5 : 10);
-          break;
-        case "left":
-          top = rect.top + (rect.height - modalHeight) / 2;
-          left = rect.left - modalWidth - (isMobile ? 5 : 10);
+          left = rect.right + 10;
           break;
         default:
           top = (windowHeight - modalHeight) / 2;
@@ -481,7 +473,7 @@ function updateOnboardingStep(name) {
     }
   } else {
     modalContent.style.top = `calc(50% - ${modalContent.getBoundingClientRect().height / 2}px)`;
-    modalContent.style.left = `calc(50% - ${isMobile ? 120 : 140}px)`;
+    modalContent.style.left = `calc(50% - 140px)`;
     dimOverlay.classList.add("show");
     
     gsap.fromTo(modalContent, {
@@ -669,7 +661,7 @@ function toggleHistory() {
     gsap.to(historyContainer, {
       duration: 0.3,
       opacity: 0,
-      x: isMobile ? "100%" : -20,
+      x: -20,
       ease: "power3.out",
       onComplete: () => {
         historyContainer.classList.remove("show");
@@ -693,7 +685,7 @@ function toggleHistoryStats() {
     gsap.to(statsContainer, {
       duration: 0.3,
       opacity: 0,
-      x: isMobile ? "-100%" : 20,
+      x: 20,
       ease: "power3.out",
       onComplete: () => {
         statsContainer.classList.remove("show");
@@ -715,7 +707,7 @@ function hideHistory() {
   gsap.to(historyContainer, {
     duration: 0.3,
     opacity: 0,
-    x: isMobile ? "100%" : -20,
+    x: -20,
     ease: "power3.out",
     onComplete: () => {
       historyContainer.classList.remove("show");
@@ -728,7 +720,7 @@ function hideHistoryStats() {
   gsap.to(statsContainer, {
     duration: 0.3,
     opacity: 0,
-    x: isMobile ? "-100%" : 20,
+    x: 20,
     ease: "power3.out",
     onComplete: () => {
       statsContainer.classList.remove("show");
@@ -739,7 +731,7 @@ function hideHistoryStats() {
 function saveToHistory(emotion, text) {
   let users = JSON.parse(localStorage.getItem("users")) || {};
   if (!users[currentUser]) {
-    users[currentUser] = { emotionHistory: [], hasSeenOnboarding: false };
+    users[currentUser] = { emotionHistory: [], hasSeenOnboarding: isMobile ? true : false };
   }
   const history = users[currentUser].emotionHistory;
   const newEntry = {
@@ -763,27 +755,21 @@ function saveToHistory(emotion, text) {
   updateParticleColor(emotion);
   updateFavicon(emotion);
   isFirstAnalysis = false;
-  displayHistory(history);
-  updateEmotionStats(history);
-  if (isMobile) {
-    hideHistory();
-    hideHistoryStats();
+  if (!isMobile) {
+    displayHistory(history);
+    updateEmotionStats(history);
   }
 }
 
 function loadHistory() {
   const users = JSON.parse(localStorage.getItem("users")) || {};
   const history = users[currentUser]?.emotionHistory || [];
-  if (history.length > 0 && !isFirstAnalysis) {
+  if (history.length > 0 && !isFirstAnalysis && !isMobile) {
     lastEmotion = history[0].emotion;
     updateParticleColor(lastEmotion);
     updateFavicon(lastEmotion);
     displayHistory(history);
     updateEmotionStats(history);
-    if (isMobile) {
-      hideHistory();
-      hideHistoryStats();
-    }
   } else {
     lastEmotion = null;
     updateParticleColor("Neutral");
@@ -821,15 +807,13 @@ function displayHistory(history) {
       });
     }, 100);
   });
-  if (!isMobile) {
-    historyContainer.classList.add("show");
-    gsap.to(historyContainer, {
-      duration: 0.4,
-      opacity: 1,
-      x: 0,
-      ease: "power3.out"
-    });
-  }
+  historyContainer.classList.add("show");
+  gsap.to(historyContainer, {
+    duration: 0.4,
+    opacity: 1,
+    x: 0,
+    ease: "power3.out"
+  });
 }
 
 function updateEmotionStats(history) {
@@ -882,15 +866,13 @@ function displayEmotionStats(emotionCounts, totalEntries) {
       ratioFill.style.width = `${percentage}%`;
     }, 200);
   });
-  if (!isMobile) {
-    statsContainer.classList.add("show");
-    gsap.to(statsContainer, {
-      duration: 0.4,
-      opacity: 1,
-      x: 0,
-      ease: "power3.out"
-    });
-  }
+  statsContainer.classList.add("show");
+  gsap.to(statsContainer, {
+    duration: 0.4,
+    opacity: 1,
+    x: 0,
+    ease: "power3.out"
+  });
 }
 
 async function analyzeText() {

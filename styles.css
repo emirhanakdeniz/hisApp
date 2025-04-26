@@ -727,7 +727,7 @@ button:hover {
   }
 
   .user-container {
-    bottom: 15px;
+    bottom: 50px;
     right: 15px;
     top: auto;
     left: auto;
@@ -745,52 +745,10 @@ button:hover {
     align-items: flex-start;
   }
 
-  .history-container {
-    top: 60px;
-    right: 10px;
-    left: auto;
-    max-width: calc(100% - 20px);
-    width: auto;
-    display: none;
-    transform: translateX(100%);
-    opacity: 0;
-  }
-
-  .history-container.show {
-    display: block;
-    animation: slideInRight 0.3s ease forwards;
-  }
-
-  .history-stats-container {
-    top: 60px;
-    left: 10px;
-    right: auto;
-    max-width: calc(100% - 20px);
-    width: auto;
-    display: none;
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-
-  .history-stats-container.show {
-    display: block;
-    animation: slideInLeft 0.3s ease forwards;
-  }
-
+  .history-container,
+  .history-stats-container,
   .history-toggle-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  #history-toggle-right {
-    top: 10px;
-    right: 10px;
-  }
-
-  #history-toggle-left {
-    top: 10px;
-    left: 10px;
+    display: none;
   }
 
   .history-emoji {
@@ -850,15 +808,6 @@ button:hover {
   .onboarding-content {
     max-width: 240px;
     padding: 0.8rem;
-  }
-
-  .history-container,
-  .history-stats-container {
-    top: 50px;
-  }
-
-  .history-list {
-    max-height: 150px;
   }
 
   .site-footer {
