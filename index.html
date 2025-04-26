@@ -2,28 +2,37 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#202123" />
   <title>His - Duygu Analizi</title>
   <meta property="og:title" content="His - Duygu Analizi">
   <meta property="og:description" content="His ile duygularını keşfet! Metinlerini analiz ederek hislerini anla.">
   <meta property="og:image" content="favicon.png">
   <meta property="og:url" content="https://yourwebsite.com">
   <link rel="icon" type="image/svg+xml" href="favicon.svg" id="favicon">
+  <link rel="apple-touch-icon" href="favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
   <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body>
   <div id="particles-js"></div>
   <canvas id="ripple-canvas"></canvas>
 
+  <!-- History Toggle Buttons for Mobile -->
+  <button class="history-toggle-btn" id="history-toggle-right" onclick="toggleHistory()">📜</button>
+  <button class="history-toggle-btn" id="history-toggle-left" onclick="toggleHistoryStats()">📊</button>
+
   <!-- İsim Giriş Modal -->
   <div class="modal" id="name-modal">
     <div class="modal-content">
       <h2>Kullanıcı Seç veya Ekle</h2>
+      <p id="mobile-user-warning" style="display: none; color: #ff5555;">Mobil cihazlarda kullanıcı değiştirilemez.</p>
       <div class="custom-dropdown">
         <div class="dropdown-selected" id="dropdown-selected">Kullanıcı Seç</div>
         <div class="dropdown-menu" id="dropdown-menu">
@@ -62,7 +71,7 @@
 
   <div class="history-container" id="history-container">
     <div class="history-stats">
-      <button class="close-btn" onclick="hideHistory()">✕</button>
+      <button class="close-btn" onclick="toggleHistory()">✕</button>
       <div class="history-title">Geçmiş Analizler</div>
       <ul class="history-list" id="history-list"></ul>
     </div>
@@ -70,7 +79,7 @@
 
   <div class="history-stats-container" id="history-stats-container">
     <div class="history-stats">
-      <button class="close-btn" onclick="hideHistoryStats()">✕</button>
+      <button class="close-btn" onclick="toggleHistoryStats()">✕</button>
       <div class="history-stats-title">Geçmiş Analiz Oranları 📊</div>
       <div class="emotion-stats" id="emotion-stats"></div>
     </div>
@@ -91,6 +100,6 @@
     <p>His - Duygularını Keşfet © 2025</p>
   </footer>
 
-  <script src="script.js"></script>
+  <script defer src="script.js"></script>
 </body>
 </html>

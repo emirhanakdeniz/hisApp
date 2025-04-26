@@ -33,6 +33,22 @@ const emotionTranslations = {
   Neutral: "Nötr"
 };
 
+// Detect mobile device
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+// Debounce utility
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
 window.addEventListener("load", () => {
   const savedUsers = JSON.parse(localStorage.getItem("users")) || {};
   const savedCurrentUser = localStorage.getItem("currentUser");
@@ -61,15 +77,15 @@ window.addEventListener("load", () => {
   }
 
   gsap.to(".container", {
-    duration: 1,
+    duration: 0.8,
     opacity: 1,
     y: 0,
-    ease: "power3.out",
+    ease: "power3.out"
   });
 
   particlesJS("particles-js", {
     particles: {
-      number: { value: 60, density: { enable: true, value_area: 800 } },
+      number: { value: isMobile ? 30 : 60, density: { enable: true, value_area: 800 } },
       color: { value: currentParticleColor },
       shape: { type: "circle" },
       opacity: { value: 0.3 },
@@ -79,14 +95,14 @@ window.addEventListener("load", () => {
         distance: 120,
         color: currentParticleColor,
         opacity: 0.2,
-        width: 1,
+        width: 1
       },
-      move: { enable: true, speed: 1 }
+      move: { enable: true, speed: isMobile ? 0.8 : 1 }
     },
     interactivity: {
       detect_on: "canvas",
       events: {
-        onhover: { enable: true, mode: "repulse" },
+        onhover: { enable: !isMobile, mode: "repulse" },
         onclick: { enable: true, mode: "push" }
       },
       modes: {
@@ -100,14 +116,25 @@ window.addEventListener("load", () => {
   updateFavicon("Neutral");
   setupRippleEffect();
   setupDropdown();
+  setupTouchEvents();
 });
+
+function setupTouchEvents() {
+  const analyzeBtn = document.getElementById("analyze-btn");
+  if (isMobile) {
+    analyzeBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      analyzeText();
+    });
+  }
+}
 
 function animateBrandLogo() {
   const brandLogo = document.getElementById("brand-logo");
   gsap.to(brandLogo, {
     scale: 1.08,
     rotation: 5,
-    duration: 1.2,
+    duration: isMobile ? 1 : 1.2,
     repeat: -1,
     yoyo: true,
     ease: "sine.inOut"
@@ -135,7 +162,7 @@ function updateFavicon(emotion) {
             stroke="#ececec"
             stroke-width="0.8"
             filter="url(#shadow)">
-        <animate attributeName="scale" values="1;1.08;1" dur="1.2s" repeatCount="indefinite"/>
+        <animate attributeName="scale" values="1;1.08;1" dur="${isMobile ? '1s' : '1.2s'}" repeatCount="indefinite"/>
       </path>
     </svg>
   `;
@@ -146,9 +173,17 @@ function setupDropdown() {
   const dropdownSelected = document.getElementById("dropdown-selected");
   const dropdownMenu = document.getElementById("dropdown-menu");
   
-  dropdownSelected.addEventListener("click", () => {
+  const toggleDropdown = () => {
     dropdownMenu.classList.toggle("show");
-  });
+  };
+
+  dropdownSelected.addEventListener("click", toggleDropdown);
+  if (isMobile) {
+    dropdownSelected.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      toggleDropdown();
+    });
+  }
 
   document.addEventListener("click", (e) => {
     if (!dropdownSelected.contains(e.target) && !dropdownMenu.contains(e.target)) {
@@ -171,12 +206,17 @@ function loadUsers() {
   });
 
   dropdownMenu.querySelectorAll(".dropdown-item").forEach(item => {
-    item.addEventListener("click", () => {
+    const handler = (e) => {
+      if (e.type === "touchstart") e.preventDefault();
       const selectedValue = item.dataset.value;
       document.getElementById("dropdown-selected").textContent = item.textContent;
       toggleNameInput(selectedValue);
       dropdownMenu.classList.remove("show");
-    });
+    };
+    item.addEventListener("click", handler);
+    if (isMobile) {
+      item.addEventListener("touchstart", handler);
+    }
   });
 }
 
@@ -194,8 +234,8 @@ function toggleNameInput(selectedValue) {
 function showNameModal() {
   const nameModal = document.getElementById("name-modal");
   const modalContent = nameModal.querySelector(".modal-content");
+  const mobileWarning = document.getElementById("mobile-user-warning");
   
-  console.log("Opening name modal...");
   nameModal.style.opacity = "1";
   nameModal.style.visibility = "visible";
   modalContent.style.opacity = "0";
@@ -204,17 +244,15 @@ function showNameModal() {
   document.getElementById("dropdown-selected").textContent = "Kullanıcı Seç";
   document.getElementById("name-input").style.display = "none";
   document.getElementById("name-input").value = "";
+  mobileWarning.style.display = isMobile ? "block" : "none";
   loadUsers();
   
   nameModal.classList.add("show");
   gsap.to(modalContent, {
-    duration: 0.3,
+    duration: 0.2,
     opacity: 1,
     y: 0,
-    ease: "power3.out",
-    onComplete: () => {
-      console.log("Name modal opened successfully.");
-    }
+    ease: "power3.out"
   });
 }
 
@@ -236,6 +274,7 @@ function saveName() {
     if (!users[currentUser]) {
       users[currentUser] = { emotionHistory: [], hasSeenOnboarding: false };
       localStorage.setItem("users", JSON.stringify(users));
+      loadUsers(); // Refresh dropdown to include new user
     }
     localStorage.setItem("currentUser", currentUser);
     updatePlaceholder(currentUser);
@@ -249,7 +288,7 @@ function saveName() {
     loadHistory();
     
     gsap.to(".modal-content", {
-      duration: 0.3,
+      duration: 0.2,
       opacity: 0,
       y: 30,
       ease: "power3.out",
@@ -276,7 +315,7 @@ function updateUserContainer(name) {
   currentUserName.textContent = `Kullanıcı: ${name}`;
   userContainer.classList.add("show");
   gsap.to(userContainer, {
-    duration: 0.5,
+    duration: 0.4,
     opacity: 1,
     y: 0,
     ease: "power3.out"
@@ -296,7 +335,7 @@ function updateGreeting(name) {
   const greetingText = `${greeting}, ${name}! His ile duygularını keşfet.`;
   const greetingElement = document.getElementById("greeting");
   gsap.to(greetingElement, {
-    duration: 0.5,
+    duration: 0.4,
     opacity: 0,
     onComplete: () => {
       greetingElement.textContent = "";
@@ -309,7 +348,7 @@ function typeWriter(text, element, index) {
   if (index < text.length) {
     element.textContent += text.charAt(index);
     gsap.to(element, {
-      duration: 0.1,
+      duration: isMobile ? 0.05 : 0.1,
       opacity: 1,
       onComplete: () => typeWriter(text, element, index + 1)
     });
@@ -339,15 +378,15 @@ function getOnboardingSteps(name) {
     },
     {
       title: `${name}'nin Geçmiş Analizleri`,
-      text: "Sol üstte son 5 analizinizi görebilirsin.",
-      highlight: "#history-container",
-      position: "right"
+      text: "📜 butonu ile son 5 analizini gör.",
+      highlight: isMobile ? "#history-toggle-right" : "#history-container",
+      position: isMobile ? "left" : "right"
     },
     {
       title: `${name}, Oranları İncele`,
-      text: "Sol altta hislerinin dağılımını keşfet.",
-      highlight: "#history-stats-container",
-      position: "right"
+      text: "📊 butonu ile hislerinin dağılımını keşfet.",
+      highlight: isMobile ? "#history-toggle-left" : "#history-stats-container",
+      position: isMobile ? "right" : "right"
     }
   ];
 }
@@ -362,11 +401,11 @@ function startOnboarding(name) {
     document.body.appendChild(dimOverlay);
   }
   
+  onboardingModal.classList.add("show");
   onboardingModal.style.opacity = "1";
   onboardingModal.style.visibility = "visible";
   
   updateOnboardingStep(name);
-  onboardingModal.classList.add("show");
 }
 
 function updateOnboardingStep(name) {
@@ -377,6 +416,9 @@ function updateOnboardingStep(name) {
   const button = modal.querySelector(".onboarding-buttons button:last-child");
   const dimOverlay = document.querySelector(".dim-overlay");
 
+  modalContent.style.opacity = "1";
+  modalContent.style.transform = "translateY(0)";
+  
   document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
   
   const step = getOnboardingSteps(name)[onboardingStep];
@@ -388,33 +430,37 @@ function updateOnboardingStep(name) {
     const element = document.querySelector(step.highlight);
     if (element) {
       element.classList.add("highlight");
-      if (step.highlight === "#history-container" || step.highlight === "#history-stats-container") {
+      if (!isMobile && (step.highlight === "#history-container" || step.highlight === "#history-stats-container")) {
         element.classList.add("show");
       }
       
       const rect = element.getBoundingClientRect();
       const windowWidth = window.innerWidth;
       const windowHeight = window.innerHeight;
-      const modalWidth = Math.min(300, windowWidth * 0.9);
-      const modalHeight = modalContent.getBoundingClientRect().height || 200;
+      const modalWidth = Math.min(isMobile ? 240 : 280, windowWidth * 0.9);
+      const modalHeight = modalContent.getBoundingClientRect().height || 180;
       let top, left;
 
       switch (step.position) {
         case "below":
-          top = rect.bottom + 10;
+          top = rect.bottom + (isMobile ? 5 : 10);
           left = rect.left + (rect.width - modalWidth) / 2;
           break;
         case "right":
           top = rect.top + (rect.height - modalHeight) / 2;
-          left = rect.right + 10;
+          left = rect.right + (isMobile ? 5 : 10);
+          break;
+        case "left":
+          top = rect.top + (rect.height - modalHeight) / 2;
+          left = rect.left - modalWidth - (isMobile ? 5 : 10);
           break;
         default:
           top = (windowHeight - modalHeight) / 2;
           left = (windowWidth - modalWidth) / 2;
       }
 
-      top = Math.max(10, Math.min(top, windowHeight - modalHeight - 10));
-      left = Math.max(10, Math.min(left, windowWidth - modalWidth - 10));
+      top = Math.max(5, Math.min(top, windowHeight - modalHeight - 5));
+      left = Math.max(5, Math.min(left, windowWidth - modalWidth - 5));
 
       modalContent.style.top = `${top}px`;
       modalContent.style.left = `${left}px`;
@@ -426,7 +472,7 @@ function updateOnboardingStep(name) {
         scale: 0.8,
         y: 20
       }, {
-        duration: 0.3,
+        duration: 0.2,
         opacity: 1,
         scale: 1,
         y: 0,
@@ -435,7 +481,7 @@ function updateOnboardingStep(name) {
     }
   } else {
     modalContent.style.top = `calc(50% - ${modalContent.getBoundingClientRect().height / 2}px)`;
-    modalContent.style.left = `calc(50% - 150px)`;
+    modalContent.style.left = `calc(50% - ${isMobile ? 120 : 140}px)`;
     dimOverlay.classList.add("show");
     
     gsap.fromTo(modalContent, {
@@ -443,7 +489,7 @@ function updateOnboardingStep(name) {
       scale: 0.8,
       y: 20
     }, {
-      duration: 0.3,
+      duration: 0.2,
       opacity: 1,
       scale: 1,
       y: 0,
@@ -464,7 +510,7 @@ function nextOnboardingStep() {
       localStorage.setItem("users", JSON.stringify(users));
     }
     gsap.to(".onboarding-content", {
-      duration: 0.3,
+      duration: 0.2,
       opacity: 0,
       scale: 0.8,
       y: 20,
@@ -474,22 +520,20 @@ function nextOnboardingStep() {
         modal.style.opacity = "0";
         modal.style.visibility = "hidden";
         dimOverlay.classList.remove("show");
+        dimOverlay.remove();
         document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
       }
     });
     return;
   }
   
-  gsap.to(".onboarding-content", {
-    duration: 0.3,
+  gsap.set(".onboarding-content", {
     opacity: 0,
     scale: 0.8,
-    y: 20,
-    ease: "power3.out",
-    onComplete: () => {
-      updateOnboardingStep(currentUser);
-    }
+    y: 20
   });
+  
+  updateOnboardingStep(currentUser);
 }
 
 function skipOnboarding() {
@@ -501,7 +545,7 @@ function skipOnboarding() {
   const modal = document.getElementById("onboarding-modal");
   const dimOverlay = document.querySelector(".dim-overlay");
   gsap.to(".onboarding-content", {
-    duration: 0.3,
+    duration: 0.2,
     opacity: 0,
     scale: 0.8,
     y: 20,
@@ -511,6 +555,7 @@ function skipOnboarding() {
       modal.style.opacity = "0";
       modal.style.visibility = "hidden";
       dimOverlay.classList.remove("show");
+      dimOverlay.remove();
       document.querySelectorAll(".highlight").forEach(el => el.classList.remove("highlight"));
     }
   });
@@ -520,7 +565,7 @@ function updateParticleColor(emotion) {
   currentParticleColor = emotionColors[emotion] || "#ffffff";
   particlesJS("particles-js", {
     particles: {
-      number: { value: 60, density: { enable: true, value_area: 800 } },
+      number: { value: isMobile ? 30 : 60, density: { enable: true, value_area: 800 } },
       color: { value: currentParticleColor },
       shape: { type: "circle" },
       opacity: { value: 0.3 },
@@ -530,14 +575,14 @@ function updateParticleColor(emotion) {
         distance: 120,
         color: currentParticleColor,
         opacity: 0.2,
-        width: 1,
+        width: 1
       },
-      move: { enable: true, speed: 1 }
+      move: { enable: true, speed: isMobile ? 0.8 : 1 }
     },
     interactivity: {
       detect_on: "canvas",
       events: {
-        onhover: { enable: true, mode: "repulse" },
+        onhover: { enable: !isMobile, mode: "repulse" },
         onclick: { enable: true, mode: "push" }
       },
       modes: {
@@ -570,8 +615,8 @@ function setupRippleEffect() {
       ctx.strokeStyle = `rgba(${parseColor(ripple.color)}, ${ripple.opacity})`;
       ctx.lineWidth = 2;
       ctx.stroke();
-      ripple.radius += 2;
-      ripple.opacity -= 0.01;
+      ripple.radius += isMobile ? 1.5 : 2;
+      ripple.opacity -= isMobile ? 0.015 : 0.01;
     });
     requestAnimationFrame(animateRipples);
   }
@@ -583,36 +628,94 @@ function setupRippleEffect() {
     return `${r}, ${g}, ${b}`;
   }
 
-  document.getElementById("analyze-btn").addEventListener("click", (e) => {
-    const rect = e.target.getBoundingClientRect();
+  const analyzeBtn = document.getElementById("analyze-btn");
+  analyzeBtn.addEventListener("click", (e) => {
+    const rect = analyzeBtn.getBoundingClientRect();
     const x = rect.left + rect.width / 2;
     const y = rect.top + rect.height / 2;
     createRipple(x, y, lastEmotion ? emotionColors[lastEmotion] : "#10a37f");
   });
 
-  window.addEventListener("resize", () => {
+  if (isMobile) {
+    analyzeBtn.addEventListener("touchstart", (e) => {
+      const touch = e.touches[0];
+      const x = touch.clientX;
+      const y = touch.clientY;
+      createRipple(x, y, lastEmotion ? emotionColors[lastEmotion] : "#10a37f");
+    });
+  }
+
+  window.addEventListener("resize", debounce(() => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-  });
+  }, 100));
 
   animateRipples();
 }
 
 function triggerConfetti() {
   confetti({
-    particleCount: 100,
-    spread: 70,
+    particleCount: isMobile ? 50 : 100,
+    spread: isMobile ? 50 : 70,
     origin: { y: 0.6 },
     colors: [currentParticleColor]
   });
 }
 
+function toggleHistory() {
+  const historyContainer = document.getElementById("history-container");
+  const isVisible = historyContainer.classList.contains("show");
+  if (isVisible) {
+    gsap.to(historyContainer, {
+      duration: 0.3,
+      opacity: 0,
+      x: isMobile ? "100%" : -20,
+      ease: "power3.out",
+      onComplete: () => {
+        historyContainer.classList.remove("show");
+      }
+    });
+  } else {
+    historyContainer.classList.add("show");
+    gsap.to(historyContainer, {
+      duration: 0.3,
+      opacity: 1,
+      x: 0,
+      ease: "power3.out"
+    });
+  }
+}
+
+function toggleHistoryStats() {
+  const statsContainer = document.getElementById("history-stats-container");
+  const isVisible = statsContainer.classList.contains("show");
+  if (isVisible) {
+    gsap.to(statsContainer, {
+      duration: 0.3,
+      opacity: 0,
+      x: isMobile ? "-100%" : 20,
+      ease: "power3.out",
+      onComplete: () => {
+        statsContainer.classList.remove("show");
+      }
+    });
+  } else {
+    statsContainer.classList.add("show");
+    gsap.to(statsContainer, {
+      duration: 0.3,
+      opacity: 1,
+      x: 0,
+      ease: "power3.out"
+    });
+  }
+}
+
 function hideHistory() {
   const historyContainer = document.getElementById("history-container");
   gsap.to(historyContainer, {
-    duration: 0.5,
+    duration: 0.3,
     opacity: 0,
-    y: -20,
+    x: isMobile ? "100%" : -20,
     ease: "power3.out",
     onComplete: () => {
       historyContainer.classList.remove("show");
@@ -623,9 +726,9 @@ function hideHistory() {
 function hideHistoryStats() {
   const statsContainer = document.getElementById("history-stats-container");
   gsap.to(statsContainer, {
-    duration: 0.5,
+    duration: 0.3,
     opacity: 0,
-    y: 20,
+    x: isMobile ? "-100%" : 20,
     ease: "power3.out",
     onComplete: () => {
       statsContainer.classList.remove("show");
@@ -662,6 +765,10 @@ function saveToHistory(emotion, text) {
   isFirstAnalysis = false;
   displayHistory(history);
   updateEmotionStats(history);
+  if (isMobile) {
+    hideHistory();
+    hideHistoryStats();
+  }
 }
 
 function loadHistory() {
@@ -673,6 +780,10 @@ function loadHistory() {
     updateFavicon(lastEmotion);
     displayHistory(history);
     updateEmotionStats(history);
+    if (isMobile) {
+      hideHistory();
+      hideHistoryStats();
+    }
   } else {
     lastEmotion = null;
     updateParticleColor("Neutral");
@@ -702,7 +813,7 @@ function displayHistory(history) {
     historyList.appendChild(listItem);
     setTimeout(() => {
       gsap.to(listItem, {
-        duration: 0.5,
+        duration: 0.4,
         opacity: 1,
         x: 0,
         ease: "power3.out",
@@ -710,13 +821,15 @@ function displayHistory(history) {
       });
     }, 100);
   });
-  historyContainer.classList.add("show");
-  gsap.to(historyContainer, {
-    duration: 0.5,
-    opacity: 1,
-    y: 0,
-    ease: "power3.out"
-  });
+  if (!isMobile) {
+    historyContainer.classList.add("show");
+    gsap.to(historyContainer, {
+      duration: 0.4,
+      opacity: 1,
+      x: 0,
+      ease: "power3.out"
+    });
+  }
 }
 
 function updateEmotionStats(history) {
@@ -769,13 +882,15 @@ function displayEmotionStats(emotionCounts, totalEntries) {
       ratioFill.style.width = `${percentage}%`;
     }, 200);
   });
-  statsContainer.classList.add("show");
-  gsap.to(statsContainer, {
-    duration: 0.5,
-    opacity: 1,
-    y: 0,
-    ease: "power3.out"
-  });
+  if (!isMobile) {
+    statsContainer.classList.add("show");
+    gsap.to(statsContainer, {
+      duration: 0.4,
+      opacity: 1,
+      x: 0,
+      ease: "power3.out"
+    });
+  }
 }
 
 async function analyzeText() {
@@ -807,7 +922,7 @@ async function analyzeText() {
     if (!response.ok) throw new Error("Hata oluştu");
 
     const data = await response.json();
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, isMobile ? 1000 : 1500));
     const emotion = data.sentiment;
 
     resultIcon.innerText = emojis[emotion] || "❓";
