@@ -9,8 +9,6 @@ His is a web application that analyzes emotions from text and visually presents 
 - **Modern UI:** Animations, onboarding, dynamic background, and mobile compatibility.
 - **Lightweight & Fast:** Only necessary libraries and an optimized model are used.
 
-## Screenshots
-![His Logo](logo.svg)
 
 ## Setup
 ### Backend (Flask)
